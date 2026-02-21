@@ -1,50 +1,63 @@
-const SYSTEM_PROMPT = `Tu es l'assistant commercial d'Okms Digital Agency, 
-fonde par Beni, expert IA base a Cotonou, Benin.
+const SYSTEM_PROMPT = `Tu es l'assistant commercial d'Okms Digital Agency, fonde par Beni, expert IA base a Cotonou, Benin.
 TON ROLE : Qualifier les prospects qui arrivent via WhatsApp.
-Repondre en francais uniquement. Style professionnel et direct. 
-Jamais d'emojis. Une seule question par message. 
+Repondre en francais uniquement. Style professionnel et direct.
+Jamais d'emojis. Une seule question par message.
 Maximum 4 lignes par reponse.
 
 SEQUENCE :
 1. Accueil : demander si formation ou livre publie
-2. Qualifier : nombre d'etudiants/lecteurs, 
-   probleme principal, experience avec l IA
+2. Qualifier : nombre d'etudiants/lecteurs, probleme principal, experience avec l IA
 3. Presenter l offre Agent IA apres 3 reponses
 4. Obtenir disponibilite pour appel 15 min avec Beni
 
-PRIX : 200 000 FCFA one-time. 
+PRIX : 200 000 FCFA one-time.
 Offre gratuite pour 3 formateurs avec 50 etudiants minimum.
-Si question hors sujet : 
-Beni vous repondra directement sur ce point.`;
+Si question hors sujet : Beni vous repondra directement sur ce point.`;
 
 const conversations = {};
 
 export default async function handler(req, res) {
+  // Verification webhook (GET)
+  if (req.method === 'GET') {
+    const mode = req.query['hub.mode'];
+    const token = req.query['hub.verify_token'];
+    const challenge = req.query['hub.challenge'];
+    if (mode === 'subscribe' && token === process.env.VERIFY_TOKEN) {
+      return res.status(200).send(challenge);
+    }
+    return res.sendStatus(403);
+  }
 
-  if (req.method === "POST") {
-    const from = req.body?.From;
-    const userText = req.body?.Body;
+  // Reception des messages (POST)
+  if (req.method === 'POST') {
+    const body = req.body;
+    if (body.object !== 'whatsapp_business_account') return res.sendStatus(200);
 
-    if (!from || !userText) return res.sendStatus(200);
+    const entry = body.entry?.[0];
+    const change = entry?.changes?.[0];
+    const message = change?.value?.messages?.[0];
+
+    if (!message || message.type !== 'text') return res.sendStatus(200);
+
+    const from = message.from;
+    const userText = message.text.body;
 
     if (!conversations[from]) conversations[from] = [];
-    conversations[from].push({ 
-      role: "user", content: userText 
-    });
+    conversations[from].push({ role: 'user', content: userText });
 
     // Appel LLM NVIDIA
     const llmResponse = await fetch(
-      "https://integrate.api.nvidia.com/v1/chat/completions",
+      'https://integrate.api.nvidia.com/v1/chat/completions',
       {
-        method: "POST",
+        method: 'POST',
         headers: {
           Authorization: `Bearer ${process.env.LLM_API_KEY}`,
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: "meta/llama-3.3-70b-instruct",
+          model: 'meta/llama-3.3-70b-instruct',
           messages: [
-            { role: "system", content: SYSTEM_PROMPT },
+            { role: 'system', content: SYSTEM_PROMPT },
             ...conversations[from].slice(-10),
           ],
           max_tokens: 200,
@@ -53,33 +66,27 @@ export default async function handler(req, res) {
         }),
       }
     );
-
     const data = await llmResponse.json();
     const reply = data.choices[0].message.content;
+    conversations[from].push({ role: 'assistant', content: reply });
 
-    conversations[from].push({ 
-      role: "assistant", content: reply 
-    });
-
-    // Envoi via Twilio
-    const accountSid = process.env.TWILIO_SID;
-    const authToken = process.env.TWILIO_TOKEN;
-    const credentials = Buffer.from(
-      `${accountSid}:${authToken}`
-    ).toString("base64");
+    // Envoi via Meta WhatsApp API
+    const phoneNumberId = process.env.PHONE_NUMBER_ID;
+    const waToken = process.env.WA_TOKEN;
 
     await fetch(
-      `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`,
+      `https://graph.facebook.com/v19.0/${phoneNumberId}/messages`,
       {
-        method: "POST",
+        method: 'POST',
         headers: {
-          Authorization: `Basic ${credentials}`,
-          "Content-Type": "application/x-www-form-urlencoded",
+          Authorization: `Bearer ${waToken}`,
+          'Content-Type': 'application/json',
         },
-        body: new URLSearchParams({
-          From: process.env.TWILIO_NUMBER,
-          To: from,
-          Body: reply,
+        body: JSON.stringify({
+          messaging_product: 'whatsapp',
+          to: from,
+          type: 'text',
+          text: { body: reply },
         }),
       }
     );
