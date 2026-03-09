@@ -1,0 +1,25 @@
+{
+  "name": "okms-whatsapp-bot",
+  "version": "1.0.0",
+  "description": "Bot WhatsApp open source pour connecter l'IA aux petites entreprises en Afrique francophone",
+  "type": "module",
+  "main": "api/webhook.js",
+  "scripts": {
+    "test": "node --experimental-vm-modules node_modules/.bin/jest",
+    "start": "node api/webhook.js"
+  },
+  "keywords": [
+    "whatsapp",
+    "bot",
+    "ai",
+    "llm",
+    "africa",
+    "francophone"
+  ],
+  "author": "OKOUMASSOUN Ganelle Béni Koba (@beniokms11)",
+  "license": "MIT",
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "@jest/globals": "^29.7.0"
+  }
+}

@@ -1,109 +1,141 @@
 # okms-whatsapp-bot
 
-Bot WhatsApp open source pour connecter l’API d’OpenAI aux petites entreprises, cliniques et agences en Afrique francophone.  
-L’objectif est de proposer un assistant conversationnel prêt à l’emploi pour le support client, la prise de rendez-vous et la qualification de leads directement dans WhatsApp.
+Bot WhatsApp open source pour connecter l'IA (LLM NVIDIA Llama) aux petites entreprises, cliniques et agences en Afrique francophone.
+L'objectif est de proposer un assistant conversationnel pret a l'emploi pour le support client, la prise de rendez-vous et la qualification de leads directement dans WhatsApp.
 
 ---
 
-## ✨ Fonctionnalités
+## Fonctionnalites
 
-- Réception et envoi de messages WhatsApp via l’API Cloud de Meta  
-- Appels à l’API d’OpenAI (assistant IA) pour générer des réponses intelligentes  
-- Gestion basique du contexte de conversation (par utilisateur)  
-- Configuration par variables d’environnement (pas de secrets dans le code)  
-- Architecture simple, pensée pour être forkée et réutilisée
+- Reception et envoi de messages WhatsApp via l'API Cloud de Meta
+- Appels au LLM NVIDIA (Llama 3.3 70B) pour generer des reponses intelligentes
+- Gestion du contexte de conversation par utilisateur (10 derniers messages)
+- Qualification automatique de prospects via un prompt commercial configurable
+- Gestion des erreurs avec logs structures
+- Configuration par variables d'environnement (pas de secrets dans le code)
+- Tests unitaires automatises
+- Architecture simple, pensee pour etre forkee et reutilisee
 
-> ⚠️ Le projet est en cours de développement. Les fonctionnalités peuvent évoluer rapidement.
-
----
-
-## 🏗️ Stack technique
-
-- Langage : Node.js / JavaScript (ou adapter ici au stack réel)
-- API de messagerie : Meta WhatsApp Cloud API
-- IA : OpenAI API (Assistants / Chat completions, selon ce que tu utilises)
-- Hébergement prévu : n8n, Termux ou petits VPS low-cost (à adapter selon ton usage)
+> Le projet est en cours de developpement. Les fonctionnalites peuvent evoluer rapidement.
 
 ---
 
-## 🚀 Démarrage rapide
+## Stack technique
 
-### 1. Prérequis
+- **Langage** : Node.js / JavaScript (ES modules)
+- **API de messagerie** : Meta WhatsApp Cloud API
+- **IA** : NVIDIA API (Llama 3.3 70B Instruct)
+- **Tests** : Jest
+- **Hebergement** : Vercel (serverless), n8n, Termux ou VPS low-cost
 
-- Node.js installé (version recommandée : 18+)
-- Un compte Meta Developer avec un numéro WhatsApp de test
-- Un compte OpenAI avec une clé API active
+---
+
+## Demarrage rapide
+
+### 1. Prerequis
+
+- Node.js installe (version recommandee : 18+)
+- Un compte Meta Developer avec un numero WhatsApp de test
+- Une cle API NVIDIA
 
 ### 2. Cloner le projet
 
 ```bash
 git clone https://github.com/beniokms11/okms-whatsapp-bot.git
 cd okms-whatsapp-bot
-3. Installer les dépendances
-bash
+```
+
+### 3. Installer les dependances
+
+```bash
 npm install
-4. Configurer les variables d’environnement
-Crée un fichier .env à la racine du projet avec les valeurs adaptées :
+```
 
-text
-OPENAI_API_KEY=ta_cle_openai
-WHATSAPP_PHONE_NUMBER_ID=ton_phone_number_id
-WHATSAPP_ACCESS_TOKEN=ton_token_meta
-VERIFY_TOKEN=ton_token_pour_le_webhook
-PORT=3000
-Ne commite jamais ce fichier .env dans Git.
+### 4. Configurer les variables d'environnement
 
-5. Lancer le serveur en local
-bash
-npm start
-Expose ensuite ton serveur en public (par exemple avec ngrok) pour connecter le webhook Meta.
+Copie le fichier `.env.example` et adapte les valeurs :
 
-🔁 Flux général du bot
-L’utilisateur envoie un message à ton numéro WhatsApp.
+```bash
+cp .env.example .env
+```
 
-Meta envoie un webhook HTTP à ton serveur.
+Variables requises :
 
-Le serveur formate la requête et appelle l’API d’OpenAI.
+```
+VERIFY_TOKEN=ton_token_de_verification
+LLM_API_KEY=ta_cle_nvidia
+PHONE_NUMBER_ID=ton_phone_number_id
+WA_TOKEN=ton_token_meta
+```
 
-La réponse de l’IA est renvoyée à l’utilisateur sur WhatsApp.
+> Ne commite jamais le fichier `.env` dans Git.
 
-📦 Déploiement
-Les scénarios visés :
+### 5. Lancer les tests
 
-n8n / make.com : intégration du bot dans des workflows no-code (CRM, Notion, Google Sheets…).
+```bash
+npm test
+```
 
-Termux / Android : expérimentation locale pour devs sans serveur dédié.
+### 6. Deployer
 
-VPS / PaaS : petit serveur Node.js pour déploiement continu.
+Le projet est pret pour un deploiement sur **Vercel** (configuration incluse dans `vercel.json`).
+Tu peux aussi exposer ton serveur en local avec ngrok pour connecter le webhook Meta.
 
-Des exemples de configurations et templates seront ajoutés au fur et à mesure.
+---
 
-🧩 Roadmap
- Gestion avancée du contexte par utilisateur
+## Flux general du bot
 
- Templates de prompts pour cas d’usage (support client, rendez-vous, leads)
+1. L'utilisateur envoie un message a ton numero WhatsApp
+2. Meta envoie un webhook HTTP a ton serveur (`/api/webhook`)
+3. Le serveur formate la requete et appelle le LLM NVIDIA
+4. La reponse de l'IA est renvoyee a l'utilisateur sur WhatsApp
 
- Intégration simple avec n8n (exemples de workflows)
+---
 
- Script d’installation rapide sur Termux
+## Deploiement
 
- Interface d’admin minimale (configuration, logs, monitoring)
+Les scenarios vises :
+
+- **Vercel** : deploiement serverless automatique (configuration incluse)
+- **n8n / make.com** : integration du bot dans des workflows no-code
+- **Termux / Android** : experimentation locale pour devs sans serveur dedie
+- **VPS / PaaS** : petit serveur Node.js pour deploiement continu
+
+---
+
+## Roadmap
+
+- [x] Integration WhatsApp / IA de base
+- [x] Gestion du contexte de conversation par utilisateur
+- [x] Gestion des erreurs et logs
+- [x] Tests unitaires
+- [ ] Templates de prompts pour cas d'usage (support client, rendez-vous, leads)
+- [ ] Integration simple avec n8n (exemples de workflows)
+- [ ] Script d'installation rapide sur Termux
+- [ ] Interface d'admin minimale (configuration, logs, monitoring)
 
 Les issues et pull requests sont les bienvenues.
 
-🤝 Contribution
+---
+
+## Contribution
+
 Tu peux contribuer en :
 
-ouvrant une issue pour signaler un bug ou proposer une idée,
+- ouvrant une issue pour signaler un bug ou proposer une idee
+- soumettant une pull request avec une amelioration
+- partageant des exemples d'usage (templates de messages, workflows, etc.)
 
-soumettant une pull request avec une amélioration,
+---
 
-partageant des exemples d’usage (templates de messages, workflows, etc.).
+## Licence
 
-📝 Licence
-Ce projet est publié sous licence MIT.
-Tu es libre de l’utiliser, le modifier et le distribuer, tant que tu inclus la licence originale.
+Ce projet est publie sous licence MIT.
+Tu es libre de l'utiliser, le modifier et le distribuer, tant que tu inclus la licence originale.
 
-🌍 À propos
-Ce projet est maintenu par OKOUMASSOUN Ganelle Béni Koba (@beniokms11).
-Il est pensé pour aider les développeurs et entrepreneurs d’Afrique francophone à déployer rapidement des assistants IA sur un canal critique : WhatsApp.
+---
+
+## A propos
+
+Ce projet est maintenu par OKOUMASSOUN Ganelle Beni Koba (@beniokms11).
+Il est pense pour aider les developpeurs et entrepreneurs d'Afrique francophone a deployer rapidement des assistants IA sur un canal critique : WhatsApp.
